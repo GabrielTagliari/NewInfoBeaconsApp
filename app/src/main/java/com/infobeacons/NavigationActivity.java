@@ -12,10 +12,18 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Cache;
+import com.android.volley.Network;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.BasicNetwork;
+import com.android.volley.toolbox.DiskBasedCache;
+import com.android.volley.toolbox.HurlStack;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.estimote.sdk.SystemRequirementsChecker;
+
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Locale;
@@ -27,11 +35,19 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
     private static final Region ALL_ESTIMOTE_BEACONS_REGION = new Region("rid", null, null, null);
     private static final String NAO_SUPORTA_TTS = "Seu dispositvo não suporta o texto para voz";
+    private static final String EMPTY = "";
+
+    private String mUrl = "http://infobeacons.mybluemix.net/listBeacons/";
 
     private BeaconManager mBeaconManager;
 
     private TextToSpeech mTts;
-    private String msg = "mensagem teste";
+    private String msg = EMPTY;
+    private String img = EMPTY;
+
+    private RequestQueue mVolleyQueue;
+
+    private JSONObject beaconEncontrado;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +57,8 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
         final TextView mTextView = (TextView) findViewById(R.id.texto);
         mTts = new TextToSpeech(NavigationActivity.this, NavigationActivity.this);
         setSupportActionBar(toolbar);
+
+        volleyStart();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -68,11 +86,21 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                     msg = list.get(0).getMacAddress().toStandardString();
                     mTextView.setText(msg);
                 } else {
-
+                    
                 }
             }
         });
 
+    }
+
+    private void volleyStart() {
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
+
+        Network network = new BasicNetwork(new HurlStack());
+
+        mVolleyQueue = new RequestQueue(cache, network);
+
+        mVolleyQueue.start();
     }
 
     @Override
