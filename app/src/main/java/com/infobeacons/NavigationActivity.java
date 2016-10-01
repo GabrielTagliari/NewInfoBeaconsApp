@@ -3,7 +3,6 @@ package com.infobeacons;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -14,7 +13,7 @@ import android.widget.Toast;
 
 import java.util.Locale;
 
-public class ScrollingActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
+public class NavigationActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private static final String NAO_SUPORTA_TTS = "Seu dispositvo não suporta o texto para voz";
 
@@ -27,7 +26,7 @@ public class ScrollingActivity extends AppCompatActivity implements TextToSpeech
         setContentView(R.layout.activity_scrolling);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         final TextView mteTextView = (TextView) findViewById(R.id.texto);
-        mTts = new TextToSpeech(ScrollingActivity.this, ScrollingActivity.this);
+        mTts = new TextToSpeech(NavigationActivity.this, NavigationActivity.this);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);

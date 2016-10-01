@@ -13,7 +13,7 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent = new Intent(this, ScrollingActivity.class);
+        Intent intent = new Intent(this, NavigationActivity.class);
         startActivity(intent);
         finish();
     }
