@@ -33,21 +33,23 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
     private String TAG = "NavigationActivity";
 
+    /* Constantes */
     private static final Region ALL_ESTIMOTE_BEACONS_REGION = new Region("rid", null, null, null);
     private static final String NAO_SUPORTA_TTS = "Seu dispositvo não suporta o texto para voz";
     private static final String EMPTY = "";
 
+    /* URL */
     private String mUrl = "http://infobeacons.mybluemix.net/listBeacons/";
+
+    /* Volley */
+    private RequestQueue mVolleyQueue;
+    private JSONObject beaconEncontrado;
 
     private BeaconManager mBeaconManager;
 
     private TextToSpeech mTts;
     private String msg = EMPTY;
     private String img = EMPTY;
-
-    private RequestQueue mVolleyQueue;
-
-    private JSONObject beaconEncontrado;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
