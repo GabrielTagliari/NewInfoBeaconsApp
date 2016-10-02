@@ -270,7 +270,8 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
         if (id == R.id.action_settings) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Ajuda");
-            builder.setMessage("Ao se aproximar do objeto haverá vibração " +
+            builder.setMessage("Necessário: Bluetooth e conexão com a internet (Wifi ou 3G)\n" +
+                    "Ao se aproximar do objeto haverá uma vibração " +
                     "e será carregada a informação.");
             builder.setPositiveButton("Entendi", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface arg0, int arg1) {
