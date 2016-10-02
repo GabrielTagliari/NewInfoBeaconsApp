@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
@@ -47,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 public class NavigationActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private static final String AUDIO_PRONTO = "Beacon Encontrado. Para ouvir clique no botão play.";
+    private static final String MSG_INTERNET = "Necessária conexão com internet";
+    private static final String ERRO_INESPERADO = "[Erro] Tentando novamente...";
     private String TAG = "NavigationActivity";
 
     /* Constantes */
@@ -78,7 +81,7 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
     private BeaconManager mBeaconManager;
 
-    private String mBeaconMaisProximo = EMPTY;
+    private String mBeaconAtual = EMPTY;
 
     private TextToSpeech mTts;
     private String mMsg = EMPTY;
@@ -140,74 +143,78 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
         });
 
         mBeaconManager.setRangingListener(new BeaconManager.RangingListener() {
+
             @Override
             public void onBeaconsDiscovered(Region region, List<Beacon> list) {
-                Log.i(TAG, "procurando...");
-                if (!list.isEmpty()) {
-                    final String nearestBeacon = list.get(0).getMacAddress().toStandardString();
 
-                    if (!mBeaconMaisProximo.equals(nearestBeacon)) {
+                if (!isOnline()) {
+                    Toast.makeText(getApplicationContext(), MSG_INTERNET, Toast.LENGTH_SHORT).show();
+                }else {
+                    if (!list.isEmpty()) {
+                        final String mBeaconProximo = list.get(0).getMacAddress().toStandardString();
 
-                        limpaMsgAndImg();
-                        mBeaconMaisProximo = nearestBeacon;
+                        if (!mBeaconAtual.equals(mBeaconProximo)) {
 
-                        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                                (Request.Method.GET, mUrl+mBeaconMaisProximo, null, new Response.Listener<JSONObject>() {
+                            limpaMsgAndImg();
+                            mBeaconAtual = mBeaconProximo;
 
-                                    @Override
-                                    public void onResponse(JSONObject response) {
-                                        try {
-                                            mBeaconEncontrado = new JSONObject(String.valueOf(response));
-                                            Log.i(TAG, "beaconEncontrado: "+mBeaconEncontrado);
+                            JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                                    (Request.Method.GET, mUrl+ mBeaconAtual, null, new Response.Listener<JSONObject>() {
 
+                                        @Override
+                                        public void onResponse(JSONObject response) {
                                             try {
-                                                if (mBeaconEncontrado.get("mac").equals(nearestBeacon)) {
-                                                    mProgress.setVisibility(View.GONE);
-                                                    mTitle = (String) mBeaconEncontrado.get("name");
-                                                    collapsingToolbarLayout.setTitle(mTitle);
-                                                    mMsg = (String) mBeaconEncontrado.get("text");
-                                                    mImg = (String) mBeaconEncontrado.get("img");
+                                                mBeaconEncontrado = new JSONObject(String.valueOf(response));
+                                                try {
+                                                    if (mBeaconEncontrado.get("mac").equals(mBeaconProximo)) {
+                                                        mProgress.setVisibility(View.GONE);
+                                                        mTitle = (String) mBeaconEncontrado.get("name");
+                                                        collapsingToolbarLayout.setTitle(mTitle);
+                                                        mMsg = (String) mBeaconEncontrado.get("text");
+                                                        mImg = (String) mBeaconEncontrado.get("img");
+                                                    }
+                                                } catch (JSONException e) {
+                                                    Log.e(TAG, "Erro json: " + e);
+                                                }
+
+                                                if (!mMsg.equals(EMPTY) && !mImg.equals(EMPTY)) {
+                                                    byte[] decodedString = Base64.decode(mImg, Base64.DEFAULT);
+                                                    Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                                    mVibrator.vibrate(500);
+                                                    mImageView.setImageBitmap(decodedByte);
+                                                    mTextView.setText(mMsg);
+                                                    Toast.makeText(getApplicationContext(), AUDIO_PRONTO, Toast.LENGTH_LONG).show();
                                                 }
                                             } catch (JSONException e) {
-                                                Log.e(TAG, "Erro json: " + e);
+                                                e.printStackTrace();
+                                                mBeaconAtual = EMPTY;
+                                                Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                                             }
-
-                                            if (!mMsg.equals(EMPTY) && !mImg.equals(EMPTY)) {
-                                                byte[] decodedString = Base64.decode(mImg, Base64.DEFAULT);
-                                                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-                                                mVibrator.vibrate(500);
-                                                mImageView.setImageBitmap(decodedByte);
-                                                mTextView.setText(mMsg);
-                                                Toast.makeText(getApplicationContext(), AUDIO_PRONTO, Toast.LENGTH_LONG).show();
-                                            }
-                                        } catch (JSONException e) {
-                                            e.printStackTrace();
-                                            mBeaconMaisProximo = EMPTY;
-                                            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                                         }
-                                    }
-                                }, new Response.ErrorListener() {
+                                    }, new Response.ErrorListener() {
 
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-                                        Log.i(TAG, "Error: " + error);
-                                        mProgress.setVisibility(View.VISIBLE);
-                                        mBeaconMaisProximo = EMPTY;
-                                        Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
-                                    }
-                                });
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            Log.i(TAG, "Error: " + error);
+                                            mProgress.setVisibility(View.VISIBLE);
+                                            mBeaconAtual = EMPTY;
+                                            Toast.makeText(getApplicationContext(), ERRO_INESPERADO, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
 
-                        mVolleyQueue.add(jsObjRequest);
+                            mVolleyQueue.add(jsObjRequest);
+                        } else {
+                            Log.i(TAG, "Continua o mesmo");
+                        }
                     } else {
-                        Log.i(TAG, "Continua o mesmo");
+                        limpaMsgAndImg();
+                        mImageView.setImageBitmap(null);
+                        mTextView.setText(EMPTY);
+                        collapsingToolbarLayout.setTitle("Procurando...");
+                        mProgress.setVisibility(View.VISIBLE);
+                        mBeaconAtual = EMPTY;
+                        Log.i(TAG, "Nenhum beacon encontrado.");
                     }
-                } else {
-                    mImageView.setImageBitmap(null);
-                    mTextView.setText(EMPTY);
-                    collapsingToolbarLayout.setTitle("Procurando...");
-                    mProgress.setVisibility(View.VISIBLE);
-                    mBeaconMaisProximo = EMPTY;
-                    Log.i(TAG, "Nenhum beacon encontrado.");
                 }
             }
         });
@@ -223,6 +230,14 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
     private void limpaMsgAndImg() {
         mMsg = EMPTY;
         mImg= EMPTY;
+    }
+
+    private boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null &&
+                cm.getActiveNetworkInfo().isConnectedOrConnecting();
     }
 
     @Override
