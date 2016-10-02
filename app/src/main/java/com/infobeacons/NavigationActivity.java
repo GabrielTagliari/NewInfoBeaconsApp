@@ -1,6 +1,7 @@
 package com.infobeacons;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
@@ -16,6 +18,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +68,10 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
     /* Toolbar */
     private Toolbar toolbar;
 
+    private CollapsingToolbarLayout collapsingToolbarLayout;
+
+    private ProgressBar mProgress;
+
     private TextView mTextView;
     private ImageView mImageView;
     private Vibrator mVibrator;
@@ -78,6 +85,8 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
     private String mImg = EMPTY;
     private String mTitle = "InfoBeacons";
 
+    private AlertDialog alerta;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,6 +97,10 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
         mImageView = (ImageView) findViewById(R.id.imagem);
         mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         mTts = new TextToSpeech(NavigationActivity.this, NavigationActivity.this);
+        mProgress = (ProgressBar) findViewById(R.id.progress);
+        collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
+
+        mProgress.setVisibility(View.VISIBLE);
 
         setSupportActionBar(toolbar);
 
@@ -136,7 +149,6 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                     if (!mBeaconMaisProximo.equals(nearestBeacon)) {
 
                         limpaMsgAndImg();
-
                         mBeaconMaisProximo = nearestBeacon;
 
                         JsonObjectRequest jsObjRequest = new JsonObjectRequest
@@ -150,8 +162,8 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
                                             try {
                                                 if (mBeaconEncontrado.get("mac").equals(nearestBeacon)) {
+                                                    mProgress.setVisibility(View.GONE);
                                                     mTitle = (String) mBeaconEncontrado.get("name");
-                                                    CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
                                                     collapsingToolbarLayout.setTitle(mTitle);
                                                     mMsg = (String) mBeaconEncontrado.get("text");
                                                     mImg = (String) mBeaconEncontrado.get("img");
@@ -179,6 +191,7 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
                                         Log.i(TAG, "Error: " + error);
+                                        mProgress.setVisibility(View.VISIBLE);
                                         mBeaconMaisProximo = EMPTY;
                                         Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
                                     }
@@ -189,8 +202,12 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                         Log.i(TAG, "Continua o mesmo");
                     }
                 } else {
+                    mImageView.setImageBitmap(null);
+                    mTextView.setText(EMPTY);
+                    collapsingToolbarLayout.setTitle("Procurando...");
+                    mProgress.setVisibility(View.VISIBLE);
                     mBeaconMaisProximo = EMPTY;
-                    Log.i(TAG, "Não encontrado nenhum beacon");
+                    Log.i(TAG, "Nenhum beacon encontrado.");
                 }
             }
         });
@@ -198,11 +215,8 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
     private void volleyStart() {
         Cache cache = new DiskBasedCache(getCacheDir(), 1024 * 1024); // 1MB cap
-
         Network network = new BasicNetwork(new HurlStack());
-
         mVolleyQueue = new RequestQueue(cache, network);
-
         mVolleyQueue.start();
     }
 
@@ -239,6 +253,15 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Ajuda");
+            builder.setMessage("Ao se aproximar do objeto haverá vibração " +
+                    "e será carregada a informação.");
+            builder.setPositiveButton("Entendi", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface arg0, int arg1) {}
+            });
+            alerta = builder.create();
+            alerta.show();
             return true;
         }
         return super.onOptionsItemSelected(item);
