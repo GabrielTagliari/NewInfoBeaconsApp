@@ -149,7 +149,7 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
                 if (!isOnline()) {
                     Toast.makeText(getApplicationContext(), MSG_INTERNET, Toast.LENGTH_SHORT).show();
-                }else {
+                } else {
                     if (!list.isEmpty()) {
                         final String mBeaconProximo = list.get(0).getMacAddress().toStandardString();
 
@@ -159,7 +159,7 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                             mBeaconAtual = mBeaconProximo;
 
                             JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                                    (Request.Method.GET, mUrl+ mBeaconAtual, null, new Response.Listener<JSONObject>() {
+                                    (Request.Method.GET, mUrl + mBeaconAtual, null, new Response.Listener<JSONObject>() {
 
                                         @Override
                                         public void onResponse(JSONObject response) {
@@ -229,7 +229,7 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
 
     private void limpaMsgAndImg() {
         mMsg = EMPTY;
-        mImg= EMPTY;
+        mImg = EMPTY;
     }
 
     private boolean isOnline() {
@@ -273,7 +273,8 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
             builder.setMessage("Ao se aproximar do objeto haverá vibração " +
                     "e será carregada a informação.");
             builder.setPositiveButton("Entendi", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface arg0, int arg1) {}
+                public void onClick(DialogInterface arg0, int arg1) {
+                }
             });
             alerta = builder.create();
             alerta.show();
