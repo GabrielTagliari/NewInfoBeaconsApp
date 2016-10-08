@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 public class NavigationActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
-    private static final String AUDIO_PRONTO = "Beacon Encontrado. Para ouvir clique no botão play.";
+    private static final String AUDIO_PRONTO = "Dados encontrados.\nPara ouvir clique no botão play.";
     private static final String MSG_INTERNET = "Necessária conexão com internet";
     private static final String ERRO_INESPERADO = "[Erro] Tentando novamente...";
     private String TAG = "NavigationActivity";
@@ -106,6 +106,7 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
         mProgress.setVisibility(View.VISIBLE);
 
         setSupportActionBar(toolbar);
+        collapsingToolbarLayout.setTitle("Procurando...");
 
         volleyStart();
 
@@ -188,7 +189,6 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                                             } catch (JSONException e) {
                                                 e.printStackTrace();
                                                 mBeaconAtual = EMPTY;
-                                                Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                                             }
                                         }
                                     }, new Response.ErrorListener() {
@@ -196,9 +196,12 @@ public class NavigationActivity extends AppCompatActivity implements TextToSpeec
                                         @Override
                                         public void onErrorResponse(VolleyError error) {
                                             Log.i(TAG, "Error: " + error);
+                                            limpaMsgAndImg();
+                                            mImageView.setImageBitmap(null);
+                                            mTextView.setText(EMPTY);
+                                            collapsingToolbarLayout.setTitle("Procurando...");
                                             mProgress.setVisibility(View.VISIBLE);
                                             mBeaconAtual = EMPTY;
-                                            Toast.makeText(getApplicationContext(), ERRO_INESPERADO, Toast.LENGTH_LONG).show();
                                         }
                                     });
 
